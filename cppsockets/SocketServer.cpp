@@ -13,7 +13,7 @@
 
 // Constructor
 
-SocketServer::SocketServer(uint16_t port, size_t buffer_size,  int domain) :
+SocketServer::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
     buffer_size(buffer_size),
     server_fd(socket(domain, SOCK_STREAM, 0)), // Opening socket
     buffer((char *)malloc(sizeof(char)*buffer_size)),
@@ -36,7 +36,9 @@ SocketServer::SocketServer(uint16_t port, size_t buffer_size,  int domain) :
 
     // Start socket
     listen(server_fd, BACKLOG); // listen at port and address
+}
 
+void SocketServer::start() {
     socklen_t clilen = sizeof(client_addr);
     client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
 
@@ -51,6 +53,10 @@ void SocketServer::init(char* (&init_communication)()){
     get(); //Wait for first response
 }
 
+void SocketServer::loop(char* (&handle)(char*), bool (&stop)(char*), int max, int depth){
+    loop(handle, stop, DEF_FREE_BUFF, max, depth);
+}
+
 void SocketServer::loop(char* (&handle)(char*), bool (&stop)(char*), bool (&free_buff)(char*), int max, int depth){
 
     *this << handle(buffer); //compute and send response
@@ -61,7 +67,7 @@ void SocketServer::loop(char* (&handle)(char*), bool (&stop)(char*), bool (&free
         reset_buffer();
 
     if( !(max>0 && max<=depth) && !has_to_stop) {
-        *this >> -1; //wait for response
+        *this >> READ_ALL; //wait for response
         loop(handle, stop, max, depth + 1);
     }
 }
@@ -81,7 +87,7 @@ char* SocketServer::get(int max) {
     if(max<=0)
         return get();
 
-    ssize_t n = read(server_fd, buffer+buffer_max, max);
+    ssize_t n = read(server_fd, buffer+buffer_max, (size_t)max);
     buffer_max += n;
 
     if(n<0)
@@ -92,7 +98,7 @@ char* SocketServer::get(int max) {
 
 void SocketServer::send(const char* message){
 
-    if(message == nullptr)
+    if(message == STOP_MESSAGE)
         return;
 
     ssize_t n = write(client_fd, message, strlen(message));
