@@ -32,7 +32,7 @@ public:
 
     void start();
 
-    void init(char* (&init_communication)());
+    void init(char* (*init_communication)());
     void loop(char* (*handle)(char*), bool (*stop)(char*), bool (*free_buff)(char*) = DEF_FREE_BUFF, int max=-1, int depth=0);
     void loop(char* (*handle)(char*), bool (*stop)(char*), int max=-1, int depth=0);
 

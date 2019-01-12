@@ -48,7 +48,7 @@ void SocketServer::start() {
 
 // Server mode
 
-void SocketServer::init(char* (&init_communication)()){
+void SocketServer::init(char* (*init_communication)()){
     *this << init_communication(); //Send first communication. To avoid, return nullptr
     get(); //Wait for first response
 }
