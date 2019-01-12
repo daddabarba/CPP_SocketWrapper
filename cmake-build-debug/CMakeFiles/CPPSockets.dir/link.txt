@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/CPPSockets.dir/main.cpp.o CMakeFiles/CPPSockets.dir/cppsockets/SocketServer.cpp.o  -o CPPSockets 
