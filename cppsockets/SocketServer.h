@@ -17,7 +17,7 @@
 const char* STOP_MESSAGE = nullptr;
 const int READ_ALL = -1;
 
-const bool (&DEF_FREE_BUFF)(char*) = *([=](char*)->bool{ return true;});
+const bool (*DEF_FREE_BUFF)(char*) = [=](char*)->bool{ return true;};
 
 class SocketServer {
 
@@ -33,8 +33,8 @@ public:
     void start();
 
     void init(char* (&init_communication)());
-    void loop(char* (&handle)(char*), bool (&stop)(char*), bool (&free_buff)(char*) = DEF_FREE_BUFF, int max=-1, int depth=0);
-    void loop(char* (&handle)(char*), bool (&stop)(char*), int max=-1, int depth=0);
+    void loop(char* (*handle)(char*), bool (*stop)(char*), bool (*free_buff)(char*) = DEF_FREE_BUFF, int max=-1, int depth=0);
+    void loop(char* (*handle)(char*), bool (*stop)(char*), int max=-1, int depth=0);
 
     SocketServer& operator<<(const char* message);
     SocketServer& operator<< (std::string const& message);

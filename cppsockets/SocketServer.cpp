@@ -53,11 +53,11 @@ void SocketServer::init(char* (&init_communication)()){
     get(); //Wait for first response
 }
 
-void SocketServer::loop(char* (&handle)(char*), bool (&stop)(char*), int max, int depth){
+void SocketServer::loop(char* (*handle)(char*), bool (*stop)(char*), int max, int depth){
     loop(handle, stop, DEF_FREE_BUFF, max, depth);
 }
 
-void SocketServer::loop(char* (&handle)(char*), bool (&stop)(char*), bool (&free_buff)(char*), int max, int depth){
+void SocketServer::loop(char* (*handle)(char*), bool (*stop)(char*), bool (*free_buff)(char*), int max, int depth){
 
     *this << handle(buffer); //compute and send response
 
