@@ -14,17 +14,16 @@
 #define BACKLOG 5
 #define BUFFER_SIZE 256
 
-const char* STOP_MESSAGE = nullptr;
-const int READ_ALL = -1;
+static const char* STOP_MESSAGE = nullptr;
+static const int READ_ALL = -1;
 
-const bool (*DEF_FREE_BUFF)(char*) = [=](char*)->bool{ return true;};
-char* (*DEFAULT_INIT_COMMUNICATIONS)() = [=]()->char*{return nullptr};
+static char* (*DEFAULT_INIT_COMMUNICATIONS)() = [&]()->char*{return nullptr;};
 
 class SocketServer {
 
 public:
 
-    typename struct Mem {
+    typedef struct Mem {
         typedef struct BufferData {
 
             char *&buffer;
