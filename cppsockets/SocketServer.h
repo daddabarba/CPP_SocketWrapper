@@ -17,8 +17,9 @@
 static const char* STOP_MESSAGE = nullptr;
 static const int READ_ALL = -1;
 
-static char* (*DEFAULT_INIT_COMMUNICATIONS)() = [&]()->char*{return nullptr;};
+//static char* (*DEFAULT_INIT_COMMUNICATIONS)() = [&]()->char*{return nullptr;};
 
+template<typename T>
 class SocketServer {
 
 public:
@@ -46,12 +47,17 @@ public:
 
     // Methods
 
-    SocketServer& start_socket();
+    SocketServer& start_handler(T &mem, char *first_message = STOP_MESSAGE, int max = -1, int depth = 0);
+
+    SocketServer& start_connection();
     SocketServer& close_socket();
 
-    SocketServer& init(char* (*init_communication)() = DEFAULT_INIT_COMMUNICATIONS);
-    template<typename T> SocketServer& loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max=-1, int depth=0);
+    SocketServer& init_stream(char *first_message = STOP_MESSAGE);
 
+    //Setters
+    SocketServer& set_handler(char* (*handler_function)(char*, T&));
+
+    //Operators
     SocketServer& operator<<(const char* message);
     SocketServer& operator<< (std::string const& message);
 
@@ -73,8 +79,14 @@ private:
     char *buffer;
     int buffer_max;
 
+    char* (*handler)(char*, T&);
+    bool (*stop_handler)(char *, T&);
+
     void validate_mem(Mem mem) const {};
-    template<typename T> SocketServer& loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth);
+    void validate_handlers() const;
+    void validate_connection() const;
+
+    SocketServer& handle_stream(T &mem, int max, int depth);
 
     SocketServer& get();
     SocketServer& get(int max);

@@ -13,13 +13,16 @@
 
 // Constructors
 
-SocketServer::Mem::BufferData::BufferData(char *&buffer, size_t &buffer_size, int &buffer_max) :
+template<typename T> SocketServer<T>::Mem::BufferData::BufferData(char *&buffer, size_t &buffer_size, int &buffer_max) :
         buffer(buffer),
         buffer_size(buffer_size),
         buffer_max(buffer_max)
 {}
 
-SocketServer::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
+template<typename T> SocketServer<T>::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
+    handler(nullptr),
+    stop_handler(nullptr),
+    client_fd(-1),
     buffer_size(buffer_size),
     server_fd(socket(domain, SOCK_STREAM, 0)), // Opening socket
     buffer((char *)malloc(sizeof(char)*buffer_size)),
@@ -44,7 +47,20 @@ SocketServer::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
     listen(server_fd, BACKLOG); // listen at port and address
 }
 
-SocketServer& SocketServer::start_socket() {
+// Socket handler
+
+template<typename T> SocketServer<T>& SocketServer<T>::start_handler(T &mem, char *first_message, int max, int depth){
+    validate_mem(mem);
+
+    mem.data = new typename SocketServer<T>::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
+
+    start_connection();
+    init_stream(first_message);
+
+    return handle_stream(mem, max, depth);
+}
+
+template<typename T> SocketServer<T>& SocketServer<T>::start_connection() {
     socklen_t clilen = sizeof(client_addr);
     client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
 
@@ -54,36 +70,35 @@ SocketServer& SocketServer::start_socket() {
     return *this;
 }
 
-SocketServer& SocketServer::close_socket() {
+template<typename T> SocketServer<T>& SocketServer<T>::close_socket() {
     close(server_fd);
     close(client_fd);
 
     return *this;
 }
 
-// Server mode
+// Request-response pattern
 
-SocketServer& SocketServer::init(char* (*init_communication)()){
-    *this << init_communication(); //Send first communication. To avoid, return nullptr
+template<typename T> SocketServer<T>& SocketServer<T>::init_stream(char *first_message){
+
+    validate_connection();
+
+    *this << first_message; //Send first communication. To avoid, return nullptr
     *this >> READ_ALL; //Wait for first response
 
     return *this;
 }
 
-template<typename T> SocketServer& SocketServer::loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
-    validate_mem(mem);
+template<typename T> SocketServer<T>& SocketServer<T>::handle_stream(T &mem, int max, int depth){
 
-    mem.data = new SocketServer::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
-    return loop_aux(handle, stop, mem, max, depth);
-}
+    validate_handlers();
+    validate_connection();
 
-template<typename T> SocketServer& SocketServer::loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
+    *this << handler(buffer, mem); //compute and send response
 
-    *this << handle(buffer, mem); //compute and send response
-
-    if( !(max>0 && max<=depth) && !stop(buffer, mem)) {
+    if( !(max>0 && max<=depth) && !stop_handler(buffer, mem)) {
         *this >> READ_ALL; //wait for response
-        return loop_aux(handle, stop, mem, max, depth + 1);
+        return handle_stream(mem, max, depth + 1);
     }
 
     return *this;
@@ -91,7 +106,7 @@ template<typename T> SocketServer& SocketServer::loop_aux(char* (*handle)(char*,
 
 // Stream communication
 
-SocketServer& SocketServer::get(){
+template<typename T> SocketServer<T>& SocketServer<T>::get(){
 
     if(buffer_max>=buffer_size)
         return *this;
@@ -99,7 +114,7 @@ SocketServer& SocketServer::get(){
     return get((int)buffer_size-buffer_max);
 }
 
-SocketServer& SocketServer::get(int max) {
+template<typename T> SocketServer<T>& SocketServer<T>::get(int max) {
 
     if(max<=0)
         return get();
@@ -113,7 +128,7 @@ SocketServer& SocketServer::get(int max) {
     return *this;
 }
 
-SocketServer& SocketServer::send(const char* message){
+template<typename T> SocketServer<T>& SocketServer<T>::send(const char* message){
 
     if(message == STOP_MESSAGE)
         return *this;
@@ -128,44 +143,62 @@ SocketServer& SocketServer::send(const char* message){
 
 // Buffer edit methods
 
-char* SocketServer::get_buffer() {
+template<typename T> char* SocketServer<T>::get_buffer() {
     return buffer;
 }
 
-SocketServer& SocketServer::reset_buffer(){
+template<typename T> SocketServer<T>& SocketServer<T>::reset_buffer(){
     memset(buffer, 0, buffer_size);
     buffer_max = 0;
 
     return *this;
 }
 
+// Setters
+
+template<typename T> SocketServer<T>& SocketServer<T>::set_handler(char* (*handler_function)(char*, T&)){
+    this->handler = handler_function;
+}
+
 // Operators
 
-SocketServer& SocketServer::operator>>(std::string& buffer){
+template<typename T> SocketServer<T>& SocketServer<T>::operator>>(std::string& buffer){
     this->get();
     strcpy(this->buffer, buffer.c_str());
 
     return *this;
 }
 
-SocketServer& SocketServer::operator>>(int max){
+template<typename T> SocketServer<T>& SocketServer<T>::operator>>(int max){
     this->get(max);
     return *this;
 }
 
-SocketServer& SocketServer::operator<<(const char* message){
+template<typename T> SocketServer<T>& SocketServer<T>::operator<<(const char* message){
     send(message);
     return *this;
 }
 
-SocketServer& SocketServer::operator<< (std::string const& message){
+template<typename T> SocketServer<T>& SocketServer<T>::operator<< (std::string const& message){
     send(message.c_str());
     return *this;
 }
 
+// Other methods
+
+template<typename T> void SocketServer<T>::validate_handlers() const{
+    if(handler == nullptr || stop_handler == nullptr)
+        throw std::runtime_error("handlers are not defined");
+}
+
+template<typename T> void SocketServer<T>::validate_connection() const {
+    if(client_fd < 0)
+        throw std::runtime_error("ERROR connection absent");
+}
+
 // Destructor
 
-SocketServer::~SocketServer() {
+template<typename T> SocketServer<T>::~SocketServer() {
     close_socket();
     free(buffer);
 }
