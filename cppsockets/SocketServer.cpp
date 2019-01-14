@@ -11,7 +11,13 @@
 #include "SocketServer.h"
 
 
-// Constructor
+// Constructors
+
+SocketServer::Mem::BufferData::BufferData(char *&buffer, size_t &buffer_size, int &buffer_max) :
+        buffer(buffer),
+        buffer_size(buffer_size),
+        buffer_max(buffer_max)
+{}
 
 SocketServer::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
     buffer_size(buffer_size),
@@ -50,25 +56,23 @@ void SocketServer::start() {
 
 void SocketServer::init(char* (*init_communication)()){
     *this << init_communication(); //Send first communication. To avoid, return nullptr
-    get(); //Wait for first response
+    *this >> READ_ALL; //Wait for first response
 }
 
-void SocketServer::loop(char* (*handle)(char*), bool (*stop)(char*), int max, int depth){
-    loop(handle, stop, DEF_FREE_BUFF, max, depth);
+template<typename T> void SocketServer::loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
+    validate_mem(mem);
+
+    mem.data = new SocketServer::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
+    loop_aux(handle, stop, mem, max, depth);
 }
 
-void SocketServer::loop(char* (*handle)(char*), bool (*stop)(char*), bool (*free_buff)(char*), int max, int depth){
+template<typename T> void SocketServer::loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
 
-    *this << handle(buffer); //compute and send response
+    *this << handle(buffer, mem); //compute and send response
 
-    bool has_to_stop = stop(buffer);
-
-    if(free_buff(buffer))
-        reset_buffer();
-
-    if( !(max>0 && max<=depth) && !has_to_stop) {
+    if( !(max>0 && max<=depth) && !stop(buffer, mem)) {
         *this >> READ_ALL; //wait for response
-        loop(handle, stop, max, depth + 1);
+        loop_aux(handle, stop, mem, max, depth + 1);
     }
 }
 

@@ -18,10 +18,27 @@ const char* STOP_MESSAGE = nullptr;
 const int READ_ALL = -1;
 
 const bool (*DEF_FREE_BUFF)(char*) = [=](char*)->bool{ return true;};
+char* (*DEFAULT_INIT_COMMUNICATIONS)() = [=]()->char*{return nullptr};
 
 class SocketServer {
 
 public:
+
+    typename struct Mem {
+        typedef struct BufferData {
+
+            char *&buffer;
+            size_t &buffer_size;
+            int &buffer_max;
+
+            BufferData(char *&buffer, size_t &buffer_size, int &buffer_max);
+
+        } BufferData;
+
+        BufferData data;
+
+    }Mem;
+
     // Constructors
     explicit SocketServer(uint16_t port, int domain=AF_INET, size_t buffer_size=BUFFER_SIZE);
 
@@ -32,9 +49,8 @@ public:
 
     void start();
 
-    void init(char* (*init_communication)());
-    void loop(char* (*handle)(char*), bool (*stop)(char*), bool (*free_buff)(char*) = DEF_FREE_BUFF, int max=-1, int depth=0);
-    void loop(char* (*handle)(char*), bool (*stop)(char*), int max=-1, int depth=0);
+    void init(char* (*init_communication)() = DEFAULT_INIT_COMMUNICATIONS);
+    template<typename T> void loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max=-1, int depth=0);
 
     SocketServer& operator<<(const char* message);
     SocketServer& operator<< (std::string const& message);
@@ -56,6 +72,9 @@ private:
 
     char *buffer;
     int buffer_max;
+
+    void validate_mem(Mem mem) const {};
+    template<typename T> void loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth);
 
     char* get();
     char* get(int max);
