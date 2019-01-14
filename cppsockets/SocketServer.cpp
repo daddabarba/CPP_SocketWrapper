@@ -91,7 +91,7 @@ char* SocketServer::get(int max) {
     if(max<=0)
         return get();
 
-    ssize_t n = read(server_fd, buffer+buffer_max, (size_t)max);
+    ssize_t n = read(client_fd, buffer+buffer_max, (size_t)max);
     buffer_max += n;
 
     if(n<0)
