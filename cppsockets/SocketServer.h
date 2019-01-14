@@ -46,10 +46,11 @@ public:
 
     // Methods
 
-    void start();
+    SocketServer& start_socket();
+    SocketServer& close_socket();
 
-    void init(char* (*init_communication)() = DEFAULT_INIT_COMMUNICATIONS);
-    template<typename T> void loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max=-1, int depth=0);
+    SocketServer& init(char* (*init_communication)() = DEFAULT_INIT_COMMUNICATIONS);
+    template<typename T> SocketServer& loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max=-1, int depth=0);
 
     SocketServer& operator<<(const char* message);
     SocketServer& operator<< (std::string const& message);
@@ -58,7 +59,7 @@ public:
     SocketServer& operator>>(int max);
 
     char* get_buffer();
-    void reset_buffer();
+    SocketServer& reset_buffer();
 
     //Delete copy from constant reference
     SocketServer(const SocketServer& mc) 				= delete;
@@ -73,11 +74,11 @@ private:
     int buffer_max;
 
     void validate_mem(Mem mem) const {};
-    template<typename T> void loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth);
+    template<typename T> SocketServer& loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth);
 
-    char* get();
-    char* get(int max);
-    void send(const char* message);
+    SocketServer& get();
+    SocketServer& get(int max);
+    SocketServer& send(const char* message);
 
 };
 

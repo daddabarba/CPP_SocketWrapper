@@ -44,49 +44,62 @@ SocketServer::SocketServer(uint16_t port,  int domain, size_t buffer_size) :
     listen(server_fd, BACKLOG); // listen at port and address
 }
 
-void SocketServer::start() {
+SocketServer& SocketServer::start_socket() {
     socklen_t clilen = sizeof(client_addr);
     client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
 
     if(client_fd < 0)
         throw std::runtime_error("ERROR on accept");
+
+    return *this;
+}
+
+SocketServer& SocketServer::close_socket() {
+    close(server_fd);
+    close(client_fd);
+
+    return *this;
 }
 
 // Server mode
 
-void SocketServer::init(char* (*init_communication)()){
+SocketServer& SocketServer::init(char* (*init_communication)()){
     *this << init_communication(); //Send first communication. To avoid, return nullptr
     *this >> READ_ALL; //Wait for first response
+
+    return *this;
 }
 
-template<typename T> void SocketServer::loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
+template<typename T> SocketServer& SocketServer::loop(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
     validate_mem(mem);
 
     mem.data = new SocketServer::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
-    loop_aux(handle, stop, mem, max, depth);
+    return loop_aux(handle, stop, mem, max, depth);
 }
 
-template<typename T> void SocketServer::loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
+template<typename T> SocketServer& SocketServer::loop_aux(char* (*handle)(char*, T&), bool (*stop)(char*, T&), T& mem, int max, int depth){
 
     *this << handle(buffer, mem); //compute and send response
 
     if( !(max>0 && max<=depth) && !stop(buffer, mem)) {
         *this >> READ_ALL; //wait for response
-        loop_aux(handle, stop, mem, max, depth + 1);
+        return loop_aux(handle, stop, mem, max, depth + 1);
     }
+
+    return *this;
 }
 
 // Stream communication
 
-char* SocketServer::get(){
+SocketServer& SocketServer::get(){
 
     if(buffer_max>=buffer_size)
-        return buffer;
+        return *this;
 
     return get((int)buffer_size-buffer_max);
 }
 
-char* SocketServer::get(int max) {
+SocketServer& SocketServer::get(int max) {
 
     if(max<=0)
         return get();
@@ -97,18 +110,20 @@ char* SocketServer::get(int max) {
     if(n<0)
         throw std::runtime_error("ERROR reading socket file desc.");
 
-    return buffer;
+    return *this;
 }
 
-void SocketServer::send(const char* message){
+SocketServer& SocketServer::send(const char* message){
 
     if(message == STOP_MESSAGE)
-        return;
+        return *this;
 
     ssize_t n = write(client_fd, message, strlen(message));
 
     if(n<0)
         throw std::runtime_error("ERROR writing in socket file desc.");
+
+    return *this;
 }
 
 // Buffer edit methods
@@ -117,9 +132,11 @@ char* SocketServer::get_buffer() {
     return buffer;
 }
 
-void SocketServer::reset_buffer(){
+SocketServer& SocketServer::reset_buffer(){
     memset(buffer, 0, buffer_size);
     buffer_max = 0;
+
+    return *this;
 }
 
 // Operators
@@ -149,8 +166,6 @@ SocketServer& SocketServer::operator<< (std::string const& message){
 // Destructor
 
 SocketServer::~SocketServer() {
-    close(server_fd);
-    close(client_fd);
-
+    close_socket();
     free(buffer);
 }
