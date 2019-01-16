@@ -12,16 +12,15 @@
 
 namespace skt {
 
-    template <typename T>
-    class SocketServer : public Socket<T> {
+    class SocketServer : public Socket {
 
     public:
 
         // Constructors
-        explicit SocketServer(uint16_t port, int domain = AF_INET, size_t buffer_size = skt::BUFFER_SIZE);
+        explicit SocketServer(uint16_t port, int domain = (int)AF_INET, size_t buffer_size = skt::BUFFER_SIZE);
         ~SocketServer();
 
-        Socket<T> &start_connection() override; //connect to other end of socket
+        Socket& start_connection() override; //connect to other end of socket
 
     protected:
         int server_fd;

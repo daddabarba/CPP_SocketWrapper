@@ -4,14 +4,13 @@
 
 #include "SocketServer.h"
 
-#include <exception>
 #include <stdexcept>
 
 #include <cstring>
 #include <unistd.h>
 
-template <typename T> skt::SocketServer<T>::SocketServer(uint16_t port, int domain, size_t buffer_size) :
-        Socket<T>(port, domain, buffer_size),
+skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
+        Socket(port, domain, buffer_size),
         server_fd(socket(domain, SOCK_STREAM, 0)) // Opening socket
 {
 
@@ -19,14 +18,14 @@ template <typename T> skt::SocketServer<T>::SocketServer(uint16_t port, int doma
         throw std::runtime_error("ERROR opening socket");
 
     // Setting socket address
-    memset((char *) &skt::Socket<T>::server_addr, 0, sizeof(this->server_addr));
+    memset((char *) &(this->server_addr), 0, sizeof(skt::Socket::server_addr));
 
-    skt::Socket<T>::server_addr.sin_family = (sa_family_t)domain;
-    skt::Socket<T>::server_addr.sin_addr.s_addr = INADDR_ANY; //run on localhost
-    skt::Socket<T>::server_addr.sin_port = htons(port);
+    this->server_addr.sin_family = (sa_family_t)domain;
+    this->server_addr.sin_addr.s_addr = INADDR_ANY; //run on localhost
+    this->server_addr.sin_port = htons(port);
 
     // Bind socket to address
-    if (bind(server_fd, (struct sockaddr *) &skt::Socket<T>::server_addr, sizeof(skt::Socket<T>::server_addr)) < 0)
+    if (bind(server_fd, (struct sockaddr *) &this->server_addr, sizeof(this->server_addr)) < 0)
         throw std::runtime_error("ERROR on binding");
 
     // Start socket
@@ -35,11 +34,11 @@ template <typename T> skt::SocketServer<T>::SocketServer(uint16_t port, int doma
 
 // Socket handler
 
-template<typename T> skt::Socket<T>& skt::SocketServer<T>::start_connection() {
+skt::Socket& skt::SocketServer::start_connection() {
     socklen_t clilen = sizeof(client_addr);
-    skt::Socket<T>::socket_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
+    this->socket_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
 
-    if(skt::Socket<T>::socket_fd < 0)
+    if(this->socket_fd < 0)
         throw std::runtime_error("ERROR on accept");
 
     return *this;
@@ -47,7 +46,7 @@ template<typename T> skt::Socket<T>& skt::SocketServer<T>::start_connection() {
 
 // Destructor
 
-template<typename T> skt::SocketServer<T>::~SocketServer() {
-    skt::Socket<T>::~Socket();
+skt::SocketServer::~SocketServer() {
+    this->~Socket();
     close(server_fd);
 }

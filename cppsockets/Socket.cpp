@@ -4,24 +4,106 @@
 
 #include "Socket.h"
 
-#include <exception>
 #include <stdexcept>
 
 #include <unistd.h>
 #include <cstring>
 
+// MEM CLASS
+
 // Constructors
 
-template<typename T> skt::Socket<T>::Mem::BufferData::BufferData(char *&buffer, size_t &buffer_size, int &buffer_max) :
-        buffer(buffer),
-        buffer_size(buffer_size),
-        buffer_max(buffer_max)
+skt::Mem::Mem(void *obj) :
+        data(),
+        obj(obj)
 {}
 
-template <typename T> skt::Socket<T>::Socket(uint16_t port, int domain, size_t buffer_size) :
+skt::Mem::BufferData::BufferData() :
+        BufferData((skt::Mem::BufferData::Reset_Buffer_Fun)nullptr, (size_t *)nullptr, (int *)nullptr)
+{}
+
+skt::Mem::BufferData::BufferData(skt::Mem::BufferData::Reset_Buffer_Fun reset_buffer, size_t *buffer_size, int *buffer_max) :
+        reset_buffer(reset_buffer),
+        buffer_size(buffer_size),
+        buffer_max(buffer_max)
+{
+    this->caller = new SocketCaller();
+}
+
+// Setters
+
+skt::Mem& skt::Mem::set_obj(void *obj) {
+    this->obj = obj;
+
+    return *this;
+}
+
+// HANDLER CLASS
+
+// Use handlers
+
+char * skt::Handler::handle(char* buffer){
+    return this->handler_function(buffer, this->mem);
+};
+
+bool skt::Handler::has_to_stop(char* buffer){
+    return this->stop_handler(buffer, this->mem);
+};
+
+// Validation
+
+void skt::Handler::validate_handlers() const {
+    // validate presence of handlers
+
+    validate_mem(this->mem);
+
+    if(handler_function == nullptr || stop_handler == nullptr)
+        throw std::runtime_error("handlers are not defined");
+};
+
+// Setters
+
+skt::Handler &skt::Handler::set_handler_function(char *(*handler_function)(char *, Mem &)){
+    this->handler_function = handler_function;
+    return *this;
+};
+
+skt::Handler &skt::Handler::set_stop_handler( bool (*stop_handler)(char *, Mem &)){
+    this->stop_handler = stop_handler;
+    return *this;
+};
+
+skt::Handler &skt::Handler::set_mem(Mem &mem){
+    this->mem = mem;
+    return *this;
+};
+
+skt::Handler &skt::Handler::set_data(Mem::BufferData data) {
+    this->mem.data = data;
+    return *this;
+}
+
+// Getters
+
+skt::Handler::Handler_Function skt::Handler::get_handler_function(){
+    return handler_function;
+};
+
+skt::Handler::Stop_Handler skt::Handler::get_stop_handler(){
+    return stop_handler;
+};
+
+// SOCKET CLASS
+
+// Constructors
+
+skt::Socket::Socket() :
+        Socket(1, AF_INET, 0)
+{}
+
+skt::Socket::Socket(uint16_t port, int domain, size_t buffer_size) :
+        handler(),
         domain(domain),
-        handler(nullptr),
-        stop_handler(nullptr),
         socket_fd(-1),
         buffer_size(buffer_size),
         buffer((char *)malloc(sizeof(char)*buffer_size)),
@@ -30,18 +112,19 @@ template <typename T> skt::Socket<T>::Socket(uint16_t port, int domain, size_t b
 
 // Socket handler
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::start_handler(T &mem, char *first_message, int max){
-    validate_mem(mem);
+skt::Socket& skt::Socket::start_handler(char const* first_message, int max){
+    this->handler.validate_handlers();
 
-    mem.data = new typename Socket<T>::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
+    skt::Mem::BufferData *data = new skt::Mem::BufferData(&skt::Socket::reset_buffer, &(this->buffer_size), &(this->buffer_max));
+    this->handler.set_data(*(data));
 
     start_connection();
     init_stream(first_message);
 
-    return handle_stream(mem, max);
+    return handle_stream(max);
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::close_socket() {
+skt::Socket& skt::Socket::close_socket() {
     close(socket_fd);
     socket_fd = -1;
 
@@ -50,7 +133,7 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::close_socket() {
 
 // Request-response pattern
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::init_stream(char *first_message){
+skt::Socket& skt::Socket::init_stream(const char *first_message){
 
     validate_connection();
 
@@ -60,18 +143,18 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::init_stream(char *first_mes
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::handle_stream(T &mem, int max){
+skt::Socket& skt::Socket::handle_stream(int max){
 
-    validate_handlers();
+    this->handler.validate_handlers();
     validate_connection();
 
-    bool has_to_stop = true;
+    bool has_to_stop;
     int depth = 0;
 
     do {
-        *this << handler(buffer, mem); //compute and send response
+        *this << this->handler.handle(buffer); //compute and send response
 
-        has_to_stop = (max>0 && max<=depth) || stop_handler(buffer, mem);
+        has_to_stop = (max>0 && max<=depth) || this->handler.has_to_stop(buffer);
 
         if(!has_to_stop)
             *this >> READ_ALL; //wait for response (from other end)
@@ -85,7 +168,7 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::handle_stream(T &mem, int m
 
 // Stream communication
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::get(){
+skt::Socket& skt::Socket::get(){
 
     if(buffer_max>=buffer_size)
         return *this;
@@ -93,7 +176,7 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::get(){
     return get((int)buffer_size-buffer_max);
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::get(int max) {
+skt::Socket& skt::Socket::get(int max) {
 
     if(max<=0)
         return get();
@@ -107,7 +190,7 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::get(int max) {
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::send(const char* message){
+skt::Socket& skt::Socket::send(const char* message){
 
     if(message == STOP_MESSAGE)
         return *this;
@@ -122,70 +205,67 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::send(const char* message){
 
 // Buffer edit methods
 
-template<typename T> char* skt::Socket<T>::get_buffer() {
+char* skt::Socket::get_buffer() {
     return buffer;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::reset_buffer(){
+skt::Socket& skt::Socket::reset_buffer(){
     memset(buffer, 0, buffer_size);
     buffer_max = 0;
-
-    return *this;
 }
 
 // Setters
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::set_handler(char* (*handler_function)(char*, T&)){
-    this->handler = handler_function;
-
-    return *this;
-}
-
-template<typename T> skt::Socket<T>& skt::Socket<T>::set_stop_handler( bool (*stop_handler)(char *, T &)){
-    this->stop_handler = stop_handler;
+skt::Socket& skt::Socket::set_handler(skt::Handler& handler){
+    this->handler = handler;
 
     return *this;
 }
 
 // Operators
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::operator>>(std::string& buffer){
+skt::Socket& skt::Socket::operator>>(std::string& buffer){
     this->get();
     strcpy(this->buffer, buffer.c_str());
 
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::operator>>(int max){
+skt::Socket& skt::Socket::operator>>(int max){
     this->get(max);
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::operator<<(const char* message){
+skt::Socket& skt::Socket::operator<<(const char* message){
     send(message);
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::operator<< (std::string const& message){
+skt::Socket& skt::Socket::operator<< (std::string const& message){
     send(message.c_str());
     return *this;
 }
 
 // Other methods
 
-template<typename T> void skt::Socket<T>::validate_handlers() const{
-    if(handler == nullptr || stop_handler == nullptr)
-        throw std::runtime_error("handlers are not defined");
-}
-
-template<typename T> void skt::Socket<T>::validate_connection() const {
+void skt::Socket::validate_connection() const {
     if(socket_fd < 0)
         throw std::runtime_error("ERROR connection absent");
 }
 
 // Destructor
 
-template<typename T> skt::Socket<T>::~Socket() {
+skt::Socket::~Socket() {
     close_socket();
     free(buffer);
+}
+
+// SOCKET_CALLER CLASS
+
+skt::SocketCaller::SocketCaller():
+        Socket()
+{}
+
+skt::Socket& skt::SocketCaller::start_connection() {
+    return *this;
 }

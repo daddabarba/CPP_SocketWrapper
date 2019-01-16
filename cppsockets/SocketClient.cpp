@@ -4,7 +4,6 @@
 
 #include "SocketClient.h"
 
-#include <exception>
 #include <stdexcept>
 
 #include <cstring>
@@ -13,33 +12,34 @@
 
 // Constructor
 
-template <typename T> skt::SocketClient<T>::SocketClient(uint16_t port, char* host_name, int domain, size_t buffer_size) :
-    Socket<T>(port, domain, buffer_size)
-{
-    skt::Socket<T>::socket_fd = socket(skt::Socket<T>::domain, SOCK_STREAM, 0);
 
-    if(skt::Socket<T>::socket_fd < 0)
+skt::SocketClient::SocketClient(uint16_t port, const std::string host_name, int domain, size_t buffer_size) :
+    Socket(port, domain, buffer_size)
+{
+    this->socket_fd = socket(this->domain, SOCK_STREAM, 0);
+
+    if(this->socket_fd < 0)
         throw std::runtime_error("ERROR opening socket");
 
-    struct hostent *server = gethostbyname(host_name);
+    struct hostent *server = gethostbyname(host_name.c_str());
 
     if(server == nullptr)
         throw std::runtime_error("ERROR, no such host");
 
-    memset((char *)& skt::Socket<T>::server_addr, 0, sizeof(this->server_addr));
+    memset((char *)& this->server_addr, 0, sizeof(this->server_addr));
 
-    skt::Socket<T>::server_addr.sin_family = (sa_family_t)domain;
+    this->server_addr.sin_family = (sa_family_t)domain;
     bcopy((char *)server->h_addr,
-          (char *)& skt::Socket<T>::server_addr.sin_addr.s_addr,
+          (char *)& this->server_addr.sin_addr.s_addr,
           (size_t)server->h_length);
-    skt::Socket<T>::server_addr.sin_port = port;
+    this->server_addr.sin_port = port;
 }
 
 // Socket handler
 
-template<typename T> skt::Socket<T>& skt::SocketClient<T>::start_connection() {
+skt::Socket& skt::SocketClient::start_connection() {
 
-    if (connect(skt::Socket<T>::socket_fd,(struct sockaddr *)& skt::Socket<T>::server_addr, sizeof(skt::Socket<T>::server_addr)) < 0)
+    if (connect(this->socket_fd,(struct sockaddr *)& this->server_addr, sizeof(this->server_addr)) < 0)
         throw std::runtime_error("ERROR connecting");
 
     return *this;
