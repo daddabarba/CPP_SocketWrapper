@@ -19,6 +19,7 @@ namespace skt {
 
         // Constructors
         explicit SocketServer(uint16_t port, int domain = AF_INET, size_t buffer_size = skt::BUFFER_SIZE);
+        ~SocketServer();
 
         Socket<T> &start_connection() override; //connect to other end of socket
         Socket<T> &close_socket() override ;  //close connection
