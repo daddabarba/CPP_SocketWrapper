@@ -51,7 +51,7 @@ namespace skt {
         Socket &start_handler(T &mem, char *first_message = STOP_MESSAGE, int max = -1, int depth = 0);
 
         virtual Socket &start_connection() = 0;
-        Socket &close_socket();
+        virtual Socket &close_socket();
 
         Socket &init_stream(char *first_message = STOP_MESSAGE);
 
