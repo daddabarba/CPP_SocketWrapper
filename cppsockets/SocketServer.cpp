@@ -2,13 +2,13 @@
 // Created by daddabarba on 1/15/19.
 //
 
+#include "SocketServer.h"
+
 #include <exception>
 #include <stdexcept>
 
 #include <cstring>
 #include <unistd.h>
-
-#include "SocketServer.h"
 
 template <typename T> skt::SocketServer<T>::SocketServer(uint16_t port, int domain, size_t buffer_size) :
         Socket<T>(port, domain, buffer_size),

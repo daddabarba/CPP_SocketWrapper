@@ -2,13 +2,13 @@
 // Created by daddabarba on 1/12/19.
 //
 
+#include "Socket.h"
+
 #include <exception>
 #include <stdexcept>
 
 #include <unistd.h>
 #include <cstring>
-
-#include "Socket.h"
 
 // Constructors
 
@@ -19,6 +19,7 @@ template<typename T> skt::Socket<T>::Mem::BufferData::BufferData(char *&buffer, 
 {}
 
 template <typename T> skt::Socket<T>::Socket(uint16_t port, int domain, size_t buffer_size) :
+        domain(domain),
         handler(nullptr),
         stop_handler(nullptr),
         socket_fd(-1),
@@ -29,7 +30,7 @@ template <typename T> skt::Socket<T>::Socket(uint16_t port, int domain, size_t b
 
 // Socket handler
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::start_handler(T &mem, char *first_message, int max, int depth){
+template<typename T> skt::Socket<T>& skt::Socket<T>::start_handler(T &mem, char *first_message, int max){
     validate_mem(mem);
 
     mem.data = new typename Socket<T>::Mem::BufferData(this->buffer, this->buffer_size, this->buffer_max);
@@ -37,11 +38,12 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::start_handler(T &mem, char 
     start_connection();
     init_stream(first_message);
 
-    return handle_stream(mem, max, depth);
+    return handle_stream(mem, max);
 }
 
 template<typename T> skt::Socket<T>& skt::Socket<T>::close_socket() {
     close(socket_fd);
+    socket_fd = -1;
 
     return *this;
 }
@@ -58,17 +60,25 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::init_stream(char *first_mes
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::Socket<T>::handle_stream(T &mem, int max, int depth){
+template<typename T> skt::Socket<T>& skt::Socket<T>::handle_stream(T &mem, int max){
 
     validate_handlers();
     validate_connection();
 
-    *this << handler(buffer, mem); //compute and send response
+    bool has_to_stop = true;
+    int depth = 0;
 
-    if( !(max>0 && max<=depth) && !stop_handler(buffer, mem)) {
-        *this >> READ_ALL; //wait for response
-        return handle_stream(mem, max, depth + 1);
-    }
+    do {
+        *this << handler(buffer, mem); //compute and send response
+
+        has_to_stop = (max>0 && max<=depth) || stop_handler(buffer, mem);
+
+        if(!has_to_stop)
+            *this >> READ_ALL; //wait for response (from other end)
+
+        depth++;
+
+    }while(!has_to_stop);
 
     return *this;
 }
@@ -127,6 +137,14 @@ template<typename T> skt::Socket<T>& skt::Socket<T>::reset_buffer(){
 
 template<typename T> skt::Socket<T>& skt::Socket<T>::set_handler(char* (*handler_function)(char*, T&)){
     this->handler = handler_function;
+
+    return *this;
+}
+
+template<typename T> skt::Socket<T>& skt::Socket<T>::set_stop_handler( bool (*stop_handler)(char *, T &)){
+    this->stop_handler = stop_handler;
+
+    return *this;
 }
 
 // Operators
