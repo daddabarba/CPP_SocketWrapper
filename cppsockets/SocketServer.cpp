@@ -45,12 +45,6 @@ template<typename T> skt::Socket<T>& skt::SocketServer<T>::start_connection() {
     return *this;
 }
 
-template<typename T> skt::Socket<T>& skt::SocketServer<T>::close_socket() {
-    skt::Socket<T>::close_socket();
-
-    return *this;
-}
-
 // Destructor
 
 template<typename T> skt::SocketServer<T>::~SocketServer() {

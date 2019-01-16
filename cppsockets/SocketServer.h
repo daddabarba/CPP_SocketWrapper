@@ -22,7 +22,6 @@ namespace skt {
         ~SocketServer();
 
         Socket<T> &start_connection() override; //connect to other end of socket
-        Socket<T> &close_socket() override ;  //close connection
 
     protected:
         int server_fd;
