@@ -16,17 +16,11 @@ skt::Mem::Mem(void *obj) :
         obj(obj)
 {}
 
-skt::Mem::BufferData::BufferData() :
-        BufferData((skt::Mem::BufferData::Reset_Buffer_Fun)nullptr, (size_t *)nullptr, (int *)nullptr)
-{}
-
-skt::Mem::BufferData::BufferData(skt::Mem::BufferData::Reset_Buffer_Fun reset_buffer, size_t *buffer_size, int *buffer_max) :
-        reset_buffer(reset_buffer),
+skt::Mem::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max) :
+        socket_interface(socket),
         buffer_size(buffer_size),
         buffer_max(buffer_max)
-{
-    this->caller = new SocketCaller();
-}
+{}
 
 // Setters
 
@@ -95,10 +89,6 @@ skt::Handler::Stop_Handler skt::Handler::get_stop_handler(){
 
 // Constructors
 
-skt::Socket::Socket() :
-        Socket(1, AF_INET, 0)
-{}
-
 skt::Socket::Socket(uint16_t port, int domain, size_t buffer_size) :
         handler(),
         domain(domain),
@@ -113,7 +103,7 @@ skt::Socket::Socket(uint16_t port, int domain, size_t buffer_size) :
 skt::Socket& skt::Socket::start_handler(char const* first_message, int max){
     this->handler.validate_handlers();
 
-    skt::Mem::BufferData *data = new skt::Mem::BufferData(&skt::Socket::reset_buffer, &(this->buffer_size), &(this->buffer_max));
+    skt::Mem::BufferData *data = new skt::Mem::BufferData(this, &(this->buffer_size), &(this->buffer_max));
     this->handler.set_data(*(data));
 
     start_connection();
@@ -256,14 +246,4 @@ void skt::Socket::validate_connection() const {
 skt::Socket::~Socket() {
     close_socket();
     free(buffer);
-}
-
-// SOCKET_CALLER CLASS
-
-skt::SocketCaller::SocketCaller():
-        Socket()
-{}
-
-skt::Socket& skt::SocketCaller::start_connection() {
-    return *this;
 }

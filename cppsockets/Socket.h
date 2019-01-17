@@ -22,6 +22,7 @@ namespace skt {
     static const char* STOP_MESSAGE = nullptr;
     static const int READ_ALL = -1;
 
+    class EditSocket;
     class Socket;
 
     // memory struct between receive/send loops
@@ -34,19 +35,15 @@ namespace skt {
 
         public:
 
-            typedef Socket& (Socket::*Reset_Buffer_Fun)();
-
             // Fields
-            Reset_Buffer_Fun reset_buffer;
+            EditSocket *socket_interface;
 
             size_t *buffer_size;
             int *buffer_max;
 
-            Socket *caller;
-
             // Constructors
-            BufferData(Reset_Buffer_Fun reset_buffer, size_t *buffer_size, int *buffer_max);
-            BufferData();
+            BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max);
+            BufferData() = default;
 
         };
 
@@ -65,10 +62,7 @@ namespace skt {
 
     public:
         // Construtor
-        Handler() :
-                handler_function(nullptr),
-                stop_handler(nullptr)
-                {};
+        Handler() = default;
 
         // Destructor
         ~Handler() = default;
@@ -103,13 +97,18 @@ namespace skt {
         Mem mem;
     };
 
-    class Socket {
+    class EditSocket{
+    public:
+        virtual Socket &reset_buffer() = 0;
+
+    };
+
+    class Socket : public EditSocket{
 
     public:
 
         // Constructor
         Socket(uint16_t port, int domain, size_t buffer_size);
-        explicit Socket();
 
         // Destructor
         ~Socket();
@@ -134,7 +133,7 @@ namespace skt {
 
         char *get_buffer();
 
-        Socket &reset_buffer();
+        Socket &reset_buffer() override;
 
         // Delete copy from constant reference
         Socket(const Socket &mc) = delete;
@@ -162,17 +161,6 @@ namespace skt {
         Socket &get();
         Socket &get(int max);
         Socket &send(const char *message);
-
-    };
-
-    class SocketCaller : public Socket {
-
-    public:
-
-        // Constructors
-        SocketCaller();
-
-        Socket& start_connection() override; //connect to other end of socket
 
     };
 }

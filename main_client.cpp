@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
                                  })
                                  .set_stop_handler([&](char* buffer, skt::Mem& mem)->bool{
 
-                                     (mem.data.caller->*mem.data.reset_buffer)();
+                                     mem.data.socket_interface->reset_buffer();
                                      return true;
                                  })
                                  .set_mem(memory))
