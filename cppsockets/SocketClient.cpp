@@ -4,16 +4,15 @@
 
 #include "SocketClient.h"
 
-#include <stdexcept>
+#include <iostream>
 
 #include <cstring>
-
-#include <netdb.h>
+#include <arpa/inet.h>
 
 // Constructor
 
 
-skt::SocketClient::SocketClient(uint16_t port, const std::string host_name, int domain, size_t buffer_size) :
+skt::SocketClient::SocketClient(uint16_t port, const std::string ip, int domain, size_t buffer_size) :
     Socket(port, domain, buffer_size)
 {
     this->socket_fd = socket(this->domain, SOCK_STREAM, 0);
@@ -21,18 +20,11 @@ skt::SocketClient::SocketClient(uint16_t port, const std::string host_name, int 
     if(this->socket_fd < 0)
         throw std::runtime_error("ERROR opening socket");
 
-    struct hostent *server = gethostbyname(host_name.c_str());
-
-    if(server == nullptr)
-        throw std::runtime_error("ERROR, no such host");
-
     memset((char *)& this->server_addr, 0, sizeof(this->server_addr));
 
     this->server_addr.sin_family = (sa_family_t)domain;
-    bcopy((char *)server->h_addr,
-          (char *)& this->server_addr.sin_addr.s_addr,
-          (size_t)server->h_length);
-    this->server_addr.sin_port = port;
+    this->server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    this->server_addr.sin_port = htons((u_short)port);
 }
 
 // Socket handler

@@ -9,6 +9,9 @@
 #include <cstring>
 #include <unistd.h>
 
+
+#include <arpa/inet.h>
+
 skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
         Socket(port, domain, buffer_size),
         server_fd(socket(domain, SOCK_STREAM, 0)) // Opening socket
@@ -21,8 +24,8 @@ skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
     memset((char *) &(this->server_addr), 0, sizeof(skt::Socket::server_addr));
 
     this->server_addr.sin_family = (sa_family_t)domain;
-    this->server_addr.sin_addr.s_addr = INADDR_ANY; //run on localhost
-    this->server_addr.sin_port = htons(port);
+    this->server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //run on localhost
+    this->server_addr.sin_port = htons((u_short)port);
 
     // Bind socket to address
     if (bind(server_fd, (struct sockaddr *) &this->server_addr, sizeof(this->server_addr)) < 0)
