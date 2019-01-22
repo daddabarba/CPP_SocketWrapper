@@ -23,7 +23,7 @@ skt::SocketClient::SocketClient(uint16_t port, const std::string ip, int domain,
     memset((char *)& this->server_addr, 0, sizeof(this->server_addr));
 
     this->server_addr.sin_family = (sa_family_t)domain;
-    this->server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    this->server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
     this->server_addr.sin_port = htons((u_short)port);
 }
 

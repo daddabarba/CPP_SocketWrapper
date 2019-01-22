@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     StoreSomething *storeSomething = new StoreSomething();
     skt::Mem memory((void *)storeSomething);
 
-    (*(new skt::SocketClient(7779, "172.17.0.1")))
+    (*(new skt::SocketClient(7779, "127.0.0.1")))
             .set_handler((*(new skt::Handler()))
                                  .set_handler_function([&](char* buffer, skt::Mem& mem)->char*{
 
