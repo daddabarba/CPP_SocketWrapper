@@ -13,6 +13,7 @@
 
 #include <string>
 #include <form.h>
+#include <functional>
 
 namespace skt {
 
@@ -25,37 +26,21 @@ namespace skt {
     class EditSocket;
     class Socket;
 
-    // memory struct between receive/send loops
-    class Mem {
+    // allow access to buffer's data
+    class BufferData {
 
     public:
 
-        // allow access to buffer's data
-        class BufferData {
-
-        public:
-
-            // Fields
-            EditSocket *socket_interface;
-
-            size_t *buffer_size;
-            int *buffer_max;
-
-            // Constructors
-            BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max);
-            BufferData() = default;
-
-        };
-
         // Fields
-        BufferData data;
-        void *obj;
+        EditSocket *socket_interface;
 
-        // Constructor
-        explicit Mem(void *obj= nullptr);
+        size_t *buffer_size;
+        int *buffer_max;
 
-        // Setters
-        Mem &set_obj(void *obj);
+        // Constructors
+        BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max);
+        BufferData() = default;
+
     };
 
     class Handler{
@@ -63,8 +48,8 @@ namespace skt {
     public:
 
 
-        typedef char *(*Handler_Function)(char *, Mem &);
-        typedef bool (*Stop_Handler)(char *, Mem &);
+        typedef std::function<char* (char *, BufferData &)> Handler_fct;
+        typedef std::function<bool (char *, BufferData &)> Stop_fct;
 
         // Construtor
         Handler() = default;
@@ -77,26 +62,25 @@ namespace skt {
         bool has_to_stop(char* buffer);
 
         // Validation
-        void validate_mem(Mem mem) const {}; // validate generics's type
+        void validate_mem(BufferData mem) const {}; // validate generics's type
 
         void validate_handlers();
 
         // Setters
-        Handler &set_handler_function(char *(*handler_function)(char *, Mem &));
-        Handler &set_stop_handler( bool (*stop_handler)(char *, Mem &));
+        Handler &set_handler_function(Handler_fct);
+        Handler &set_stop_handler( Stop_fct);
 
-        Handler &set_mem(Mem &mem);
-        Handler &set_data(Mem::BufferData data);
+        Handler &set_data(BufferData data);
 
         // Getters
-        Handler_Function get_handler_function();
-        Stop_Handler get_stop_handler();
+        Handler_fct get_handler_function();
+        Stop_fct get_stop_handler();
 
     protected:
-        char *(*handler_function)(char *, Mem &);
-        bool (*stop_handler)(char *, Mem &);
+        Handler_fct handler_function;
+        Stop_fct stop_handler;
 
-        Mem mem;
+        BufferData mem;
     };
 
     class EditSocket{

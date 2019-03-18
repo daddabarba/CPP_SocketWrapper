@@ -11,24 +11,11 @@
 
 // Constructors
 
-skt::Mem::Mem(void *obj) :
-        data(),
-        obj(obj)
-{}
-
-skt::Mem::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max) :
+skt::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max) :
         socket_interface(socket),
         buffer_size(buffer_size),
         buffer_max(buffer_max)
 {}
-
-// Setters
-
-auto skt::Mem::set_obj(void *obj) -> skt::Mem&{
-    this->obj = obj;
-
-    return *this;
-}
 
 // HANDLER CLASS
 
@@ -55,33 +42,28 @@ auto skt::Handler::validate_handlers() -> void {
 
 // Setters
 
-auto skt::Handler::set_handler_function(char *(*handler_function)(char *, Mem &)) -> skt::Handler& {
+auto skt::Handler::set_handler_function(skt::Handler::Handler_fct handler_function) -> skt::Handler& {
     this->handler_function = handler_function;
     return *this;
 };
 
-auto skt::Handler::set_stop_handler( bool (*stop_handler)(char *, Mem &)) -> skt::Handler& {
+auto skt::Handler::set_stop_handler( skt::Handler::Stop_fct stop_handler) -> skt::Handler& {
     this->stop_handler = stop_handler;
     return *this;
 };
 
-auto skt::Handler::set_mem(Mem &mem) -> skt::Handler& {
-    this->mem = mem;
-    return *this;
-};
-
-auto skt::Handler::set_data(Mem::BufferData data) -> skt::Handler& {
-    this->mem.data = data;
+auto skt::Handler::set_data(BufferData data) -> skt::Handler& {
+    this->mem = data;
     return *this;
 }
 
 // Getters
 
-auto skt::Handler::get_handler_function() -> skt::Handler::Handler_Function {
+auto skt::Handler::get_handler_function() -> skt::Handler::Handler_fct {
     return handler_function;
 };
 
-auto skt::Handler::get_stop_handler() -> skt::Handler::Stop_Handler {
+auto skt::Handler::get_stop_handler() -> skt::Handler::Stop_fct {
     return stop_handler;
 };
 
@@ -103,7 +85,7 @@ skt::Socket::Socket(uint16_t port, int domain, size_t buffer_size) :
 auto skt::Socket::start_handler(char const* first_message, int max) -> skt::Socket& {
     this->handler.validate_handlers();
 
-    skt::Mem::BufferData *data = new skt::Mem::BufferData(this, &(this->buffer_size), &(this->buffer_max));
+    skt::BufferData *data = new skt::BufferData(this, &(this->buffer_size), &(this->buffer_max));
     this->handler.set_data(*(data));
 
     start_connection();
