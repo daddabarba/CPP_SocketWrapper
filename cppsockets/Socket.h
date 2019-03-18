@@ -61,6 +61,11 @@ namespace skt {
     class Handler{
 
     public:
+
+
+        typedef char *(*Handler_Function)(char *, Mem &);
+        typedef bool (*Stop_Handler)(char *, Mem &);
+
         // Construtor
         Handler() = default;
 
@@ -74,7 +79,7 @@ namespace skt {
         // Validation
         void validate_mem(Mem mem) const {}; // validate generics's type
 
-        void validate_handlers() const;
+        void validate_handlers();
 
         // Setters
         Handler &set_handler_function(char *(*handler_function)(char *, Mem &));
@@ -84,10 +89,7 @@ namespace skt {
         Handler &set_data(Mem::BufferData data);
 
         // Getters
-        typedef char *(*Handler_Function)(char *, Mem &);
         Handler_Function get_handler_function();
-
-        typedef bool (*Stop_Handler)(char *, Mem &);
         Stop_Handler get_stop_handler();
 
     protected:
@@ -156,7 +158,7 @@ namespace skt {
 
         // Validation methods
 
-        void validate_connection() const; // asses if connection has been established
+        void validate_connection(); // asses if connection has been established
 
         Socket &get();
         Socket &get(int max);

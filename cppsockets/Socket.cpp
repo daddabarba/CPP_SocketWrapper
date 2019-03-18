@@ -24,7 +24,7 @@ skt::Mem::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, int *b
 
 // Setters
 
-skt::Mem& skt::Mem::set_obj(void *obj) {
+auto skt::Mem::set_obj(void *obj) -> skt::Mem&{
     this->obj = obj;
 
     return *this;
@@ -34,17 +34,17 @@ skt::Mem& skt::Mem::set_obj(void *obj) {
 
 // Use handlers
 
-char * skt::Handler::handle(char* buffer){
+auto skt::Handler::handle(char* buffer) -> char * {
     return this->handler_function(buffer, this->mem);
 };
 
-bool skt::Handler::has_to_stop(char* buffer){
+auto skt::Handler::has_to_stop(char* buffer) -> bool {
     return this->stop_handler(buffer, this->mem);
 };
 
 // Validation
 
-void skt::Handler::validate_handlers() const {
+auto skt::Handler::validate_handlers() -> void {
     // validate presence of handlers
 
     validate_mem(this->mem);
@@ -55,33 +55,33 @@ void skt::Handler::validate_handlers() const {
 
 // Setters
 
-skt::Handler &skt::Handler::set_handler_function(char *(*handler_function)(char *, Mem &)){
+auto skt::Handler::set_handler_function(char *(*handler_function)(char *, Mem &)) -> skt::Handler& {
     this->handler_function = handler_function;
     return *this;
 };
 
-skt::Handler &skt::Handler::set_stop_handler( bool (*stop_handler)(char *, Mem &)){
+auto skt::Handler::set_stop_handler( bool (*stop_handler)(char *, Mem &)) -> skt::Handler& {
     this->stop_handler = stop_handler;
     return *this;
 };
 
-skt::Handler &skt::Handler::set_mem(Mem &mem){
+auto skt::Handler::set_mem(Mem &mem) -> skt::Handler& {
     this->mem = mem;
     return *this;
 };
 
-skt::Handler &skt::Handler::set_data(Mem::BufferData data) {
+auto skt::Handler::set_data(Mem::BufferData data) -> skt::Handler& {
     this->mem.data = data;
     return *this;
 }
 
 // Getters
 
-skt::Handler::Handler_Function skt::Handler::get_handler_function(){
+auto skt::Handler::get_handler_function() -> skt::Handler::Handler_Function {
     return handler_function;
 };
 
-skt::Handler::Stop_Handler skt::Handler::get_stop_handler(){
+auto skt::Handler::get_stop_handler() -> skt::Handler::Stop_Handler {
     return stop_handler;
 };
 
@@ -100,7 +100,7 @@ skt::Socket::Socket(uint16_t port, int domain, size_t buffer_size) :
 
 // Socket handler
 
-skt::Socket& skt::Socket::start_handler(char const* first_message, int max){
+auto skt::Socket::start_handler(char const* first_message, int max) -> skt::Socket& {
     this->handler.validate_handlers();
 
     skt::Mem::BufferData *data = new skt::Mem::BufferData(this, &(this->buffer_size), &(this->buffer_max));
@@ -112,7 +112,7 @@ skt::Socket& skt::Socket::start_handler(char const* first_message, int max){
     return handle_stream(max);
 }
 
-skt::Socket& skt::Socket::close_socket() {
+auto skt::Socket::close_socket() -> skt::Socket& {
     close(socket_fd);
     socket_fd = -1;
 
@@ -121,7 +121,7 @@ skt::Socket& skt::Socket::close_socket() {
 
 // Request-response pattern
 
-skt::Socket& skt::Socket::init_stream(const char *first_message){
+auto skt::Socket::init_stream(const char *first_message) -> skt::Socket& {
 
     validate_connection();
 
@@ -131,7 +131,7 @@ skt::Socket& skt::Socket::init_stream(const char *first_message){
     return *this;
 }
 
-skt::Socket& skt::Socket::handle_stream(int max){
+auto skt::Socket::handle_stream(int max) -> skt::Socket& {
 
     this->handler.validate_handlers();
     validate_connection();
@@ -156,7 +156,7 @@ skt::Socket& skt::Socket::handle_stream(int max){
 
 // Stream communication
 
-skt::Socket& skt::Socket::get(){
+auto skt::Socket::get() -> skt::Socket& {
 
     if(buffer_max>=buffer_size)
         return *this;
@@ -164,7 +164,7 @@ skt::Socket& skt::Socket::get(){
     return get((int)buffer_size-buffer_max);
 }
 
-skt::Socket& skt::Socket::get(int max) {
+auto skt::Socket::get(int max) -> skt::Socket& {
 
     if(max<=0)
         return get();
@@ -178,7 +178,7 @@ skt::Socket& skt::Socket::get(int max) {
     return *this;
 }
 
-skt::Socket& skt::Socket::send(const char* message){
+auto skt::Socket::send(const char* message) -> skt::Socket& {
 
     if(message == STOP_MESSAGE)
         return *this;
@@ -193,18 +193,18 @@ skt::Socket& skt::Socket::send(const char* message){
 
 // Buffer edit methods
 
-char* skt::Socket::get_buffer() {
+auto skt::Socket::get_buffer() -> char* {
     return buffer;
 }
 
-skt::Socket& skt::Socket::reset_buffer(){
+auto skt::Socket::reset_buffer() -> skt::Socket& {
     memset(buffer, 0, buffer_size);
     buffer_max = 0;
 }
 
 // Setters
 
-skt::Socket& skt::Socket::set_handler(skt::Handler& handler){
+auto skt::Socket::set_handler(skt::Handler& handler) -> skt::Socket& {
     this->handler = handler;
 
     return *this;
@@ -212,31 +212,31 @@ skt::Socket& skt::Socket::set_handler(skt::Handler& handler){
 
 // Operators
 
-skt::Socket& skt::Socket::operator>>(std::string& buffer){
+auto skt::Socket::operator>>(std::string& buffer) -> skt::Socket& {
     this->get();
     strcpy(this->buffer, buffer.c_str());
 
     return *this;
 }
 
-skt::Socket& skt::Socket::operator>>(int max){
+auto skt::Socket::operator>>(int max) -> skt::Socket& {
     this->get(max);
     return *this;
 }
 
-skt::Socket& skt::Socket::operator<<(const char* message){
+auto skt::Socket::operator<<(const char* message) -> skt::Socket& {
     send(message);
     return *this;
 }
 
-skt::Socket& skt::Socket::operator<< (std::string const& message){
+auto skt::Socket::operator<< (std::string const& message) -> skt::Socket& {
     send(message.c_str());
     return *this;
 }
 
 // Other methods
 
-void skt::Socket::validate_connection() const {
+auto skt::Socket::validate_connection() -> void {
     if(socket_fd < 0)
         throw std::runtime_error("ERROR connection absent");
 }
