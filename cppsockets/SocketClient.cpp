@@ -29,7 +29,7 @@ skt::SocketClient::SocketClient(uint16_t port, const std::string ip, int domain,
 
 // Socket handler
 
-skt::Socket& skt::SocketClient::start_connection() {
+auto skt::SocketClient::start_connection() -> skt::Socket& {
 
     if (connect(this->socket_fd,(struct sockaddr *)& this->server_addr, sizeof(this->server_addr)) < 0)
         throw std::runtime_error("ERROR connecting");

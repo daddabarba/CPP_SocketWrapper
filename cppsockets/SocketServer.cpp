@@ -37,9 +37,9 @@ skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
 
 // Socket handler
 
-skt::Socket& skt::SocketServer::start_connection() {
-    socklen_t clilen = sizeof(client_addr);
-    this->socket_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilen); // wait for client
+auto skt::SocketServer::start_connection() -> skt::Socket& {
+    socklen_t clilent = sizeof(client_addr);
+    this->socket_fd = accept(server_fd, (struct sockaddr *) &client_addr, &clilent); // wait for client
 
     if(this->socket_fd < 0)
         throw std::runtime_error("ERROR on accept");
