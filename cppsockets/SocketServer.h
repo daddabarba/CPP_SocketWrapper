@@ -26,6 +26,8 @@ namespace skt {
         int server_fd;
         struct sockaddr_in client_addr;
 
+        void bind_sock();
+
     };
 }
 

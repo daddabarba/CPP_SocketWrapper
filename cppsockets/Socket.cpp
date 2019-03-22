@@ -196,7 +196,9 @@ auto skt::Socket::set_handler(skt::Handler& handler) -> skt::Socket& {
 
 auto skt::Socket::operator>>(std::string& buffer) -> skt::Socket& {
     this->get();
-    strcpy(this->buffer, buffer.c_str());
+
+    buffer.clear();
+    buffer.append(this->buffer);
 
     return *this;
 }

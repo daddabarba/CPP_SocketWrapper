@@ -121,9 +121,6 @@ namespace skt {
 
         Socket &reset_buffer() override;
 
-        // Delete copy from constant reference
-        Socket(const Socket &mc) = delete;
-
         Socket& operator=(const Socket &mc)    = delete;
 
     protected:
@@ -133,7 +130,7 @@ namespace skt {
         size_t buffer_size;
         int domain;
         int socket_fd;
-        struct sockaddr_in server_addr;
+        struct sockaddr_in server_addr_in;
 
         char *buffer;
         int buffer_max;

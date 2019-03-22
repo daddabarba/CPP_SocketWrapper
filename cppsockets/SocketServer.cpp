@@ -21,14 +21,22 @@ skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
         throw std::runtime_error("ERROR opening socket");
 
     // Setting socket address
-    memset((char *) &(this->server_addr), 0, sizeof(skt::Socket::server_addr));
+    memset((char *) &(this->server_addr_in), 0, sizeof(skt::Socket::server_addr_in));
 
-    this->server_addr.sin_family = (sa_family_t)domain;
-    this->server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //run on localhost
-    this->server_addr.sin_port = htons((u_short)port);
+    this->server_addr_in.sin_family = (sa_family_t)domain;
+    this->server_addr_in.sin_addr.s_addr = htonl(INADDR_ANY); //run on localhost
+    this->server_addr_in.sin_port = htons((u_short)port);
 
+    this->bind_sock();
+}
+
+auto skt::SocketServer::bind_sock() -> void {
     // Bind socket to address
-    if (bind(server_fd, (struct sockaddr *) &this->server_addr, sizeof(this->server_addr)) < 0)
+    if (this->domain == AF_INET
+        && bind(
+            server_fd,
+            (struct sockaddr*)&this->server_addr_in,
+            sizeof(this->server_addr_in)) < 0)
         throw std::runtime_error("ERROR on binding");
 
     // Start socket
