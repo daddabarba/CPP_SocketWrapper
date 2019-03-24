@@ -122,8 +122,8 @@ namespace skt {
         Socket &operator<<(std::string const &message); //send buffer
         Socket &operator>>(std::string &buffer); //write buffer
         Socket &operator>>(int max); //read "max" characters
-        Socket &operator>>(int* n); //read int (and store it in n)
-        Socket &operator>>(float* n); //read float (and store it in n)
+        int operator>>(int* n); //read int (and store it in n)
+        float operator>>(float* n); //read float (and store it in n)
 
         char *get_buffer();
 

@@ -211,7 +211,7 @@ auto skt::Socket::operator>>(int max) -> skt::Socket& {
     return *this;
 }
 
-auto skt::Socket::operator>>(int* n) -> skt::Socket& {
+auto skt::Socket::operator>>(int* n) -> int {
     this->get();
 
     // Convert bytes into int
@@ -219,10 +219,10 @@ auto skt::Socket::operator>>(int* n) -> skt::Socket& {
     memcpy(&val, this->buffer, sizeof(val));
     *n = val;
 
-    return *this;
+    return val;
 }
 
-auto skt::Socket::operator>>(float* n) -> skt::Socket& {
+auto skt::Socket::operator>>(float* n) -> float {
     this->get();
 
     // Convert bytes into int
@@ -230,7 +230,7 @@ auto skt::Socket::operator>>(float* n) -> skt::Socket& {
     memcpy(&val, this->buffer, sizeof(val));
     *n = val;
 
-    return *this;
+    return val;
 }
 
 auto skt::Socket::operator<<(int val) -> skt::Socket& {
