@@ -139,12 +139,13 @@ namespace skt {
         size_t buffer_size, buffer_max;
         int domain;
         int socket_fd;
-        struct sockaddr_in server_addr_in;
-        struct sockaddr_un server_addr_un;
 
         char *buffer;
 
         Handler handler;
+
+        struct sockaddr_in server_addr_in;
+        struct sockaddr_un server_addr_un;
 
         // Validation methods
 

@@ -72,12 +72,12 @@ auto skt::Handler::get_stop_handler() -> skt::Handler::Stop_fct {
 // Constructors
 
 skt::Socket::Socket(int domain, size_t buffer_size) :
-        handler(),
+        buffer_size(buffer_size),
+        buffer_max(0),
         domain(domain),
         socket_fd(socket(this->domain, SOCK_STREAM, 0)),
-        buffer_size(buffer_size),
         buffer((char *)malloc(sizeof(char)*buffer_size)),
-        buffer_max(0)
+        handler()
 {
     if(this->socket_fd < 0)
         throw std::runtime_error("ERROR opening socket");
