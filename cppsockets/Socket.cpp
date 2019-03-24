@@ -222,6 +222,17 @@ auto skt::Socket::operator>>(int* n) -> skt::Socket& {
     return *this;
 }
 
+auto skt::Socket::operator>>(float* n) -> skt::Socket& {
+    this->get();
+
+    // Convert bytes into int
+    float val;
+    memcpy(&val, this->buffer, sizeof(val));
+    *n = val;
+
+    return *this;
+}
+
 auto skt::Socket::operator<<(const char* message) -> skt::Socket& {
     send(message);
     return *this;
