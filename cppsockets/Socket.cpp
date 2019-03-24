@@ -185,6 +185,8 @@ auto skt::Socket::get_buffer() -> char* {
 auto skt::Socket::reset_buffer() -> skt::Socket& {
     memset(buffer, 0, buffer_size*sizeof(char));
     buffer_max = 0;
+
+    return *this;
 }
 
 // Setters
