@@ -233,6 +233,17 @@ auto skt::Socket::operator>>(float* n) -> float {
     return val;
 }
 
+auto skt::Socket::operator>>(double* n) -> double {
+    this->get();
+
+    // Convert bytes into int
+    double val;
+    memcpy(&val, this->buffer, sizeof(val));
+    *n = val;
+
+    return val;
+}
+
 auto skt::Socket::operator<<(int val) -> skt::Socket& {
 
     char buffer[sizeof(int)];
