@@ -183,7 +183,7 @@ auto skt::Socket::get_buffer() -> char* {
 }
 
 auto skt::Socket::reset_buffer() -> skt::Socket& {
-    memset(buffer, 0, buffer_size);
+    memset(buffer, 0, buffer_size*sizeof(char));
     buffer_max = 0;
 }
 
@@ -208,6 +208,17 @@ auto skt::Socket::operator>>(std::string& buffer) -> skt::Socket& {
 
 auto skt::Socket::operator>>(int max) -> skt::Socket& {
     this->get(max);
+    return *this;
+}
+
+auto skt::Socket::operator>>(int* n) -> skt::Socket& {
+    this->get();
+
+    // Convert bytes into int
+    int val;
+    memcpy(&val, this->buffer, sizeof(val));
+    *n = val;
+
     return *this;
 }
 
