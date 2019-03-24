@@ -16,9 +16,14 @@ namespace skt {
     public:
 
         //Constructor
-        explicit SocketClient(uint16_t port, const std::string ip, int domain = AF_INET, size_t buffer_size = skt::BUFFER_SIZE);
+        SocketClient(uint16_t port, const std::string ip, size_t buffer_size = skt::BUFFER_SIZE);
+        explicit SocketClient(const std::string file_name, size_t buffer_size = skt::BUFFER_SIZE);
 
         Socket& start_connection() override; //connect to other end of socket
+
+    private:
+
+        SocketClient(int domain, size_t buffer_size);
 
     };
 }

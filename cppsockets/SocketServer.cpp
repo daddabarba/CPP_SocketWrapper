@@ -12,14 +12,13 @@
 
 #include <arpa/inet.h>
 
-skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
-        Socket(port, domain, buffer_size),
-        server_fd(socket(domain, SOCK_STREAM, 0)) // Opening socket
+skt::SocketServer::SocketServer(int domain, size_t buffer_size) :
+    Socket(domain, buffer_size)
+{};
+
+skt::SocketServer::SocketServer(uint16_t port, size_t buffer_size) :
+    SocketServer(AF_INET, buffer_size)
 {
-
-    if(this->server_fd < 0)
-        throw std::runtime_error("ERROR opening socket");
-
     // Setting socket address
     memset((char *) &(this->server_addr_in), 0, sizeof(skt::Socket::server_addr_in));
 
@@ -30,13 +29,32 @@ skt::SocketServer::SocketServer(uint16_t port, int domain, size_t buffer_size) :
     this->bind_sock();
 }
 
+skt::SocketServer::SocketServer(const std::string file_name, size_t buffer_size) :
+    SocketServer(AF_UNIX, buffer_size)
+{
+    memset((char *)&(this->server_addr_un), 0, sizeof(this->server_addr_un));
+
+    this->server_addr_un.sun_family = AF_UNIX;
+    strcpy(this->server_addr_un.sun_PATH, file_name.c_str());
+
+    this->bind_sock();
+}
+
 auto skt::SocketServer::bind_sock() -> void {
     // Bind socket to address
-    if (this->domain == AF_INET
-        && bind(
-            server_fd,
-            (struct sockaddr*)&this->server_addr_in,
-            sizeof(this->server_addr_in)) < 0)
+    if (
+            (
+                    this->domain == AF_INET
+                    && bind(
+                            server_fd,
+                            (struct sockaddr*)&this->server_addr_in,
+                            sizeof(this->server_addr_in)) < 0)
+            || (
+                    this->domain == AF_UNIX
+                    && bind(
+                            server_fd,
+                            (struct sockaddr*)&this->server_addr_un,
+                            sizeof(this->server_addr_un)) < 0))
         throw std::runtime_error("ERROR on binding");
 
     // Start socket

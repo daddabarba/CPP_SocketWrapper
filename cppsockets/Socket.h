@@ -26,6 +26,11 @@ namespace skt {
     class EditSocket;
     class Socket;
 
+    struct sockaddr_un{
+        short                    sun_family;                /*AF_UNIX*/
+        char                     sun_PATH[108];        /*path name */
+    };
+
     // allow access to buffer's data
     class BufferData {
 
@@ -94,7 +99,7 @@ namespace skt {
     public:
 
         // Constructor
-        Socket(uint16_t port, int domain, size_t buffer_size);
+        Socket(int domain, size_t buffer_size);
 
         // Destructor
         ~Socket();
@@ -131,6 +136,7 @@ namespace skt {
         int domain;
         int socket_fd;
         struct sockaddr_in server_addr_in;
+        struct sockaddr_un server_addr_un;
 
         char *buffer;
         int buffer_max;
