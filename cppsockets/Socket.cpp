@@ -11,7 +11,7 @@
 
 // Constructors
 
-skt::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max) :
+skt::BufferData::BufferData(EditSocket *socket, size_t *buffer_size, size_t *buffer_max) :
         socket_interface(socket),
         buffer_size(buffer_size),
         buffer_max(buffer_max)

@@ -39,11 +39,10 @@ namespace skt {
         // Fields
         EditSocket *socket_interface;
 
-        size_t *buffer_size;
-        int *buffer_max;
+        size_t *buffer_size, *buffer_max;
 
         // Constructors
-        BufferData(EditSocket *socket, size_t *buffer_size, int *buffer_max);
+        BufferData(EditSocket *socket, size_t *buffer_size, size_t *buffer_max);
         BufferData() = default;
 
     };
@@ -137,14 +136,13 @@ namespace skt {
 
         // Fields
 
-        size_t buffer_size;
+        size_t buffer_size, buffer_max;
         int domain;
         int socket_fd;
         struct sockaddr_in server_addr_in;
         struct sockaddr_un server_addr_un;
 
         char *buffer;
-        int buffer_max;
 
         Handler handler;
 
