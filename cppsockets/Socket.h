@@ -125,6 +125,7 @@ namespace skt {
         int operator>>(int* n); //read int (and store it in n)
         float operator>>(float* n); //read float (and store it in n)
         double operator>>(double* n); //read double (and store it in n)
+        unsigned int operator>>(unsigned int* n); //read double (and store it in n)
 
         char *get_buffer();
 

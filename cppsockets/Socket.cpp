@@ -244,6 +244,17 @@ auto skt::Socket::operator>>(double* n) -> double {
     return val;
 }
 
+auto skt::Socket::operator>>(unsigned int* n) -> unsigned int {
+    this->get();
+
+    // Convert bytes into int
+    unsigned int val;
+    memcpy(&val, this->buffer, sizeof(val));
+    *n = val;
+
+    return val;
+}
+
 auto skt::Socket::operator<<(int val) -> skt::Socket& {
 
     char buffer[sizeof(int)];
