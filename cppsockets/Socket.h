@@ -117,6 +117,7 @@ namespace skt {
         Socket &set_handler(skt::Handler& handler);
 
         // Operators
+        Socket &operator<<(int val); //send int
         Socket &operator<<(const char *message); //send buffer
         Socket &operator<<(std::string const &message); //send buffer
         Socket &operator>>(std::string &buffer); //write buffer

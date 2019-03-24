@@ -233,6 +233,15 @@ auto skt::Socket::operator>>(float* n) -> skt::Socket& {
     return *this;
 }
 
+auto skt::Socket::operator<<(int val) -> skt::Socket& {
+
+    char buffer[sizeof(int)];
+    memcpy(buffer, &val, sizeof(int));
+
+    send(buffer);
+    return *this;
+}
+
 auto skt::Socket::operator<<(const char* message) -> skt::Socket& {
     send(message);
     return *this;

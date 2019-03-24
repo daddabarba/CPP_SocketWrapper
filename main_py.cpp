@@ -16,9 +16,11 @@ int main(int argc, char **argv){
 
     std::cout << "connected" << std::endl;
     client >> &val;
+    client << val+1;
     std::cout << "Message: " << val << std::endl;
     client.reset_buffer();
     client >> &val;
+    client << val*2;
     std::cout << "Message: " << val << std::endl;
 
     return 0;
