@@ -163,17 +163,22 @@ auto skt::Socket::get(int max) -> skt::Socket& {
     return *this;
 }
 
-auto skt::Socket::send(const char* message) -> skt::Socket& {
+auto skt::Socket::send(const char* message, size_t message_size) -> skt::Socket& {
 
     if(message == STOP_MESSAGE)
         return *this;
 
-    ssize_t n = write(socket_fd, message, strlen(message));
+    ssize_t n = write(socket_fd, message, message_size);
 
     if(n<0)
         throw std::runtime_error("ERROR writing in socket file desc.");
 
     return *this;
+}
+
+auto skt::Socket::send(const char* message) -> skt::Socket& {
+
+    return send(message, strlen(message));
 }
 
 // Buffer edit methods
@@ -262,7 +267,16 @@ auto skt::Socket::operator<<(int val) -> skt::Socket& {
     char buffer[sizeof(int)];
     memcpy(buffer, &val, sizeof(int));
 
-    send(buffer);
+    send(buffer, sizeof(int));
+    return *this;
+}
+
+auto skt::Socket::operator<<(double val) -> skt::Socket& {
+
+    char buffer[sizeof(double)];
+    memcpy(buffer, &val, sizeof(double));
+
+    send(buffer, sizeof(double));
     return *this;
 }
 
