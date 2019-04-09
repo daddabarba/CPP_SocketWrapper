@@ -219,7 +219,7 @@ auto skt::Socket::operator>>(int max) -> skt::Socket& {
 }
 
 auto skt::Socket::operator>>(int* n) -> int {
-    this->get();
+    this->get(sizeof(int));
 
     // Convert bytes into int
     int val;
@@ -230,7 +230,7 @@ auto skt::Socket::operator>>(int* n) -> int {
 }
 
 auto skt::Socket::operator>>(float* n) -> float {
-    this->get();
+    this->get(sizeof(float));
 
     // Convert bytes into int
     float val;
@@ -241,7 +241,7 @@ auto skt::Socket::operator>>(float* n) -> float {
 }
 
 auto skt::Socket::operator>>(double* n) -> double {
-    this->get();
+    this->get(sizeof(double));
 
     // Convert bytes into int
     double val;
@@ -252,7 +252,7 @@ auto skt::Socket::operator>>(double* n) -> double {
 }
 
 auto skt::Socket::operator>>(unsigned int* n) -> unsigned int {
-    this->get();
+    this->get(sizeof(unsigned int));
 
     // Convert bytes into int
     unsigned int val;
