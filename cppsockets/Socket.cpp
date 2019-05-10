@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <cstring>
 
+#include <iostream>
+
 // MEM CLASS
 
 // Constructors
@@ -154,11 +156,11 @@ auto skt::Socket::get(int max) -> skt::Socket& {
     if(max<=0)
         return get();
 
-    ssize_t n = read(socket_fd, buffer+buffer_max, (size_t)max);
+    ssize_t n = recv(socket_fd, buffer+buffer_max, (size_t)max, MSG_WAITALL);
     buffer_max += n;
 
     if(n<0)
-        throw std::runtime_error("ERROR reading socket file desc.");
+        throw std::runtime_error("ERROR " + std::to_string(n) +  " reading socket file desc.");
 
     return *this;
 }
@@ -171,7 +173,7 @@ auto skt::Socket::send(const char* message, size_t message_size) -> skt::Socket&
     ssize_t n = write(socket_fd, message, message_size);
 
     if(n<0)
-        throw std::runtime_error("ERROR writing in socket file desc.");
+        throw std::runtime_error("ERROR " + std::to_string(n) + " writing in socket file desc.");
 
     return *this;
 }
